@@ -10,7 +10,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.StudentShedule">
         <activity
-            android:name=".MainActivity"
+            android:name=".CActivityStudentInfo"
+            android:exported="true" />
+        <activity
+            android:name=".CActivityMenu"
+            android:exported="true" />
+        <activity
+            android:name=".CActivityLogin"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
