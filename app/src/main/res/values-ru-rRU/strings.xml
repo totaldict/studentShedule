@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">StudentShedule</string>
+    <string name="MyAccount">Мои данные</string>
+    <string name="Exit">Выход</string>
+    <string name="Settings">Настройки</string>
+    <string name="About">О программе</string>
+    <string name="Save">Сохранить</string>
+    <string name="AddLesson">Добавить урок</string>
 </resources>

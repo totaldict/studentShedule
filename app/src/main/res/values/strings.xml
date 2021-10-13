@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">StudentShedule</string>
+    <string name="MyAccount">My Account</string>
+    <string name="Settings">Settings</string>
+    <string name="About">About</string>
+    <string name="Exit">Exit</string>
+    <string name="Save">Save</string>
+    <string name="AddLesson">Add Lesson</string>
+    <string name="PARAM_LOGIN" translatable="false">LOGIN</string>
+    <string name="FILE_NAME_PREFERENCES" translatable="false">Preferences</string>
 </resources>
