@@ -8,12 +8,20 @@ import com.example.studentshedule.model.CLesson
 import org.joda.time.format.DateTimeFormat
 
 class CRecyclerViewLessonListAdapter (
-    private val lessons: ArrayList<CLesson>,
+    private var lessons: List<CLesson>,
     private val listener: IClickListener?
     ) :
     RecyclerView.Adapter<CRecyclerViewLessonListAdapter.ViewHolder>() {
 
     val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm")
+
+    fun updateData(lessons : List<CLesson>)
+    {
+        // тут лучше проверку, отличается или нет. Если нет - то не делаем.
+        this.lessons = lessons
+        // уведомляем форму что данные изменились и надо их обновить на форме
+        notifyDataSetChanged()
+    }
 
     /**
      * Provide a reference to the type of views that you are using

@@ -4,9 +4,14 @@ import android.content.Intent
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.lifecycle.lifecycleScope
 import com.example.studentshedule.R
+import com.example.studentshedule.dao.IDAOLessons
 import com.example.studentshedule.databinding.ActivityLessonBinding
 import com.example.studentshedule.databinding.ActivityLessonListBinding
+import com.example.studentshedule.model.CLesson
+import com.example.studentshedule.util.CDatabase
+import kotlinx.coroutines.launch
 import org.joda.time.LocalDate
 import org.joda.time.LocalDateTime
 import org.joda.time.LocalTime
@@ -16,7 +21,13 @@ import java.util.*
 class CActivityLesson : AppCompatActivity() {
     private lateinit var binding: ActivityLessonBinding
     // val formatterDate = DateTimeFormat.forPattern("YYYY-MM-DD")
-    val formatterTime = DateTimeFormat.forPattern("HH:mm")
+    private val formatterTime = DateTimeFormat.forPattern("HH:mm")
+
+    private var date : LocalDate? = null
+    private var time: LocalTime? = null
+
+    private lateinit var lesson: CLesson
+    private lateinit var daoLessons: IDAOLessons
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,34 +35,27 @@ class CActivityLesson : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
-        val index = intent.getIntExtra("PARAM_LESSON_INDEX", -1)
-        var subject = intent.getStringExtra("PARAM_LESSON_SUBJECT")
-        val dateTimeString = intent.getStringExtra ("PARAM_LESSON_DATE")
-
-        binding.editTextSubject.setText(subject);
-        var dateTime = LocalDateTime.parse(dateTimeString)
-
-        var date : LocalDate? = null
-        var time: LocalTime? = null
-
-        binding.calendarView.date = dateTime.toDate().time
-
-        if (Build.VERSION.SDK_INT >= 23 ) {
-            binding.timePicker.hour = dateTime.hourOfDay
-            binding.timePicker.minute = dateTime.minuteOfHour
+        val db = CDatabase.getDatabase(this)
+        daoLessons = db.daoLessons()
+        val sId = intent.getStringExtra(getString(R.string.PARAM_LESSON_ID))
+        val id = UUID.fromString(sId)
+        lifecycleScope.launch {
+            lesson = daoLessons.findById(id)
+            showLesson()
         }
-        else
-        {
-            binding.timePicker.currentHour = dateTime.hourOfDay
-            binding.timePicker.currentMinute = dateTime.minuteOfHour
-        }
+
+
+//        val index = intent.getIntExtra("PARAM_LESSON_INDEX", -1)
+//        var subject = intent.getStringExtra("PARAM_LESSON_SUBJECT")
+//        val dateTimeString = intent.getStringExtra ("PARAM_LESSON_DATE")
+
+
 
         binding.calendarView.setOnDateChangeListener { calendarView, year, month, dayOfMonth ->
             date = LocalDate.now()
                 .withYear(year)
                 .withMonthOfYear(month+1)
                 .withDayOfMonth(dayOfMonth)
-        }
 
         binding.timePicker.setIs24HourView(true)
         binding.timePicker.setOnTimeChangedListener { timePicker, hourOfDay, minuteOfHour ->
@@ -63,29 +67,53 @@ class CActivityLesson : AppCompatActivity() {
         binding.buttonSave.setOnClickListener{
             //Сохранить данные
 
-            subject = binding.editTextSubject.text.toString()
+            lesson.subject = binding.editTextSubject.text.toString()
 
             date?.let {
-                dateTime = dateTime
+                lesson.dateTime = lesson.dateTime
                     .withYear(it.year)
                     .withMonthOfYear(it.monthOfYear)
                     .withDayOfMonth(it.dayOfMonth)
             }
 
             time?.let {
-                dateTime = dateTime
+                lesson.dateTime = lesson.dateTime
                     .withHourOfDay(it.hourOfDay)
                     .withMinuteOfHour(it.minuteOfHour)
             }
 
-            //Завершить активность с передачей данных в родительскую активность
-            val intent = Intent()
-            intent.putExtra("PARAM_LESSON_INDEX", index)
-            intent.putExtra("PARAM_LESSON_SUBJECT", subject)
-            intent.putExtra("PARAM_LESSON_DATE", dateTime.toString())
-            intent.putExtra("PARAM_ACTIVITY_NAME", "CActivityLesson")
-            setResult(RESULT_OK, intent)
+//            //Завершить активность с передачей данных в родительскую активность
+//            val intent = Intent()
+//            intent.putExtra("PARAM_ACTIVITY_NAME", "CActivityLesson")
+
+            lifecycleScope.launch {
+                daoLessons.update(lesson)
+            }
+//            setResult(RESULT_OK, intent)
             finish()
         }
+    }
+
+
+    }
+
+    /** Отображение данных из урока на форме */
+    private fun showLesson()
+    {
+        binding.editTextSubject.setText(lesson.subject)
+
+        binding.calendarView.date = lesson.dateTime.toDate().time
+
+        if (Build.VERSION.SDK_INT >= 23 ) {
+            binding.timePicker.hour = lesson.dateTime.hourOfDay
+            binding.timePicker.minute = lesson.dateTime.minuteOfHour
+        }
+        else
+        {
+            binding.timePicker.currentHour = lesson.dateTime.hourOfDay
+            binding.timePicker.currentMinute = lesson.dateTime.minuteOfHour
+        }
+
+
     }
 }
