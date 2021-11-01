@@ -11,6 +11,8 @@ import com.example.studentshedule.databinding.ActivityLessonBinding
 import com.example.studentshedule.databinding.ActivityLessonListBinding
 import com.example.studentshedule.model.CLesson
 import com.example.studentshedule.util.CDatabase
+import com.example.studentshedule.util.rest.CRetrofitBuilder
+import com.example.studentshedule.util.rest.IServerAPITemplate
 import kotlinx.coroutines.launch
 import org.joda.time.LocalDate
 import org.joda.time.LocalDateTime
@@ -40,7 +42,7 @@ class CActivityLesson : AppCompatActivity() {
         val sId = intent.getStringExtra(getString(R.string.PARAM_LESSON_ID))
         val id = UUID.fromString(sId)
         lifecycleScope.launch {
-            lesson = daoLessons.findById(id)
+            lesson = daoLessons.findById(id)?: CLesson(id, "", LocalDateTime.now())
             showLesson()
         }
 
@@ -87,7 +89,18 @@ class CActivityLesson : AppCompatActivity() {
 //            intent.putExtra("PARAM_ACTIVITY_NAME", "CActivityLesson")
 
             lifecycleScope.launch {
-                daoLessons.update(lesson)
+                val lessonFromDB = daoLessons.findById(id)
+                lessonFromDB?.let {
+                    daoLessons.update(lesson)
+                } ?: run {
+                    daoLessons.insert(lesson)
+                }
+
+                val retrofit = CRetrofitBuilder.getRetrofit()
+                val service = retrofit.create(IServerAPITemplate::class.java)
+                service.saveLesson(lesson)
+
+
             }
 //            setResult(RESULT_OK, intent)
             finish()

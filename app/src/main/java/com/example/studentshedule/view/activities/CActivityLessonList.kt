@@ -18,6 +18,8 @@ import com.example.studentshedule.dao.IDAOLessons
 import com.example.studentshedule.databinding.ActivityLessonListBinding
 import com.example.studentshedule.model.CLesson
 import com.example.studentshedule.util.CDatabase
+import com.example.studentshedule.util.rest.CRetrofitBuilder
+import com.example.studentshedule.util.rest.IServerAPITemplate
 import com.example.studentshedule.view.adapters.CRecyclerViewLessonListAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -60,6 +62,9 @@ class CActivityLessonList : AppCompatActivity() {
         //val a = intent.getStringExtra("LOGIN")
         //binding.textView.text = a
 
+        val retrofit = CRetrofitBuilder.getRetrofit()
+        val service = retrofit.create(IServerAPITemplate::class.java)
+
         // Обработчик клика на элемент списка открывает форму редактирования/просмотра выбранного элемента
         val listener = object : CRecyclerViewLessonListAdapter.IClickListener {
             override fun onItemClick(lesson: CLesson, index: Int) {
@@ -74,8 +79,9 @@ class CActivityLessonList : AppCompatActivity() {
             override fun onItemDeleteClick(lesson : CLesson, index: Int) {
                 lifecycleScope.launch {
                     daoLessons.delete(lesson)
+                    // Отправка на сервер информации об удалении
+                    service.deleteLesson(lesson.id)
                 }
-
             }
         }
 
@@ -132,6 +138,28 @@ class CActivityLessonList : AppCompatActivity() {
             daoLessons.getAllFlow().collect { test_lessons ->
                 // Update the UI.
                 adapter.updateData(test_lessons)
+            }
+        }
+        // использование HTTP REST
+        lifecycleScope.launch {
+            val temp_lessons = service.getAllLessons()
+            // удаляем из БД те, которых нет на сервере
+            val LessonsFromDB = daoLessons.getAll()
+            LessonsFromDB
+                .filter { currentLesson ->
+                    return@filter !temp_lessons.contains(currentLesson)
+                }
+                .forEach { currentLesson ->
+                    daoLessons.delete(currentLesson)
+                }
+            // добавляем в БД
+            temp_lessons.forEach { lesson ->
+                val lessonFromDB = daoLessons.findById(lesson.id)
+                lessonFromDB?.let { // когда lessonFromDB не равна NULL
+                    daoLessons.update(lesson)
+                } ?: run { // когда lessonFromDB равна NULL
+                    daoLessons.insert(lesson)
+                }
             }
         }
 
